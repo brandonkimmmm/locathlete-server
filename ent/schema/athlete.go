@@ -15,8 +15,7 @@ type Athlete struct {
 // Fields of the Athlete.
 func (Athlete) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("email").NotEmpty(),
-		field.Text("bio"),
+		field.Text("bio").NotEmpty(),
 		field.String("first_name").NotEmpty(),
 		field.String("middle_name").Optional(),
 		field.String("last_name").NotEmpty(),

@@ -20,12 +20,6 @@ type AthleteCreate struct {
 	hooks    []Hook
 }
 
-// SetEmail sets the "email" field.
-func (ac *AthleteCreate) SetEmail(s string) *AthleteCreate {
-	ac.mutation.SetEmail(s)
-	return ac
-}
-
 // SetBio sets the "bio" field.
 func (ac *AthleteCreate) SetBio(s string) *AthleteCreate {
 	ac.mutation.SetBio(s)
@@ -175,16 +169,13 @@ func (ac *AthleteCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (ac *AthleteCreate) check() error {
-	if _, ok := ac.mutation.Email(); !ok {
-		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Athlete.email"`)}
-	}
-	if v, ok := ac.mutation.Email(); ok {
-		if err := athlete.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Athlete.email": %w`, err)}
-		}
-	}
 	if _, ok := ac.mutation.Bio(); !ok {
 		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "Athlete.bio"`)}
+	}
+	if v, ok := ac.mutation.Bio(); ok {
+		if err := athlete.BioValidator(v); err != nil {
+			return &ValidationError{Name: "bio", err: fmt.Errorf(`ent: validator failed for field "Athlete.bio": %w`, err)}
+		}
 	}
 	if _, ok := ac.mutation.FirstName(); !ok {
 		return &ValidationError{Name: "first_name", err: errors.New(`ent: missing required field "Athlete.first_name"`)}
@@ -235,14 +226,6 @@ func (ac *AthleteCreate) createSpec() (*Athlete, *sqlgraph.CreateSpec) {
 			},
 		}
 	)
-	if value, ok := ac.mutation.Email(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: athlete.FieldEmail,
-		})
-		_node.Email = value
-	}
 	if value, ok := ac.mutation.Bio(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,

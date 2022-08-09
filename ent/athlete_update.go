@@ -28,12 +28,6 @@ func (au *AthleteUpdate) Where(ps ...predicate.Athlete) *AthleteUpdate {
 	return au
 }
 
-// SetEmail sets the "email" field.
-func (au *AthleteUpdate) SetEmail(s string) *AthleteUpdate {
-	au.mutation.SetEmail(s)
-	return au
-}
-
 // SetBio sets the "bio" field.
 func (au *AthleteUpdate) SetBio(s string) *AthleteUpdate {
 	au.mutation.SetBio(s)
@@ -168,9 +162,9 @@ func (au *AthleteUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (au *AthleteUpdate) check() error {
-	if v, ok := au.mutation.Email(); ok {
-		if err := athlete.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Athlete.email": %w`, err)}
+	if v, ok := au.mutation.Bio(); ok {
+		if err := athlete.BioValidator(v); err != nil {
+			return &ValidationError{Name: "bio", err: fmt.Errorf(`ent: validator failed for field "Athlete.bio": %w`, err)}
 		}
 	}
 	if v, ok := au.mutation.FirstName(); ok {
@@ -203,13 +197,6 @@ func (au *AthleteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := au.mutation.Email(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: athlete.FieldEmail,
-		})
 	}
 	if value, ok := au.mutation.Bio(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -276,12 +263,6 @@ type AthleteUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *AthleteMutation
-}
-
-// SetEmail sets the "email" field.
-func (auo *AthleteUpdateOne) SetEmail(s string) *AthleteUpdateOne {
-	auo.mutation.SetEmail(s)
-	return auo
 }
 
 // SetBio sets the "bio" field.
@@ -431,9 +412,9 @@ func (auo *AthleteUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (auo *AthleteUpdateOne) check() error {
-	if v, ok := auo.mutation.Email(); ok {
-		if err := athlete.EmailValidator(v); err != nil {
-			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "Athlete.email": %w`, err)}
+	if v, ok := auo.mutation.Bio(); ok {
+		if err := athlete.BioValidator(v); err != nil {
+			return &ValidationError{Name: "bio", err: fmt.Errorf(`ent: validator failed for field "Athlete.bio": %w`, err)}
 		}
 	}
 	if v, ok := auo.mutation.FirstName(); ok {
@@ -483,13 +464,6 @@ func (auo *AthleteUpdateOne) sqlSave(ctx context.Context) (_node *Athlete, err e
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := auo.mutation.Email(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: athlete.FieldEmail,
-		})
 	}
 	if value, ok := auo.mutation.Bio(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{

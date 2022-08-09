@@ -253,12 +253,12 @@ func (aq *AthleteQuery) Clone() *AthleteQuery {
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		Bio string `json:"bio,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Athlete.Query().
-//		GroupBy(athlete.FieldEmail).
+//		GroupBy(athlete.FieldBio).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (aq *AthleteQuery) GroupBy(field string, fields ...string) *AthleteGroupBy {
@@ -281,11 +281,11 @@ func (aq *AthleteQuery) GroupBy(field string, fields ...string) *AthleteGroupBy 
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		Bio string `json:"bio,omitempty"`
 //	}
 //
 //	client.Athlete.Query().
-//		Select(athlete.FieldEmail).
+//		Select(athlete.FieldBio).
 //		Scan(ctx, &v)
 func (aq *AthleteQuery) Select(fields ...string) *AthleteSelect {
 	aq.fields = append(aq.fields, fields...)

@@ -1,15 +1,16 @@
 package main
 
 import (
-	"net/http"
-	"github.com/labstack/echo/v4"
 	"locathlete-server/configs"
+	"locathlete-server/routes"
+
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
 	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello world")
-	})
+	configs.Init()
+	defer configs.DbClose()
+	routes.AthleteRoute(e)
 	e.Logger.Fatal(e.Start(":" + configs.GetPort()))
 }

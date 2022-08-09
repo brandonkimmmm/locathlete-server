@@ -14,24 +14,24 @@ import (
 func init() {
 	athleteFields := schema.Athlete{}.Fields()
 	_ = athleteFields
-	// athleteDescEmail is the schema descriptor for email field.
-	athleteDescEmail := athleteFields[0].Descriptor()
-	// athlete.EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	athlete.EmailValidator = athleteDescEmail.Validators[0].(func(string) error)
+	// athleteDescBio is the schema descriptor for bio field.
+	athleteDescBio := athleteFields[0].Descriptor()
+	// athlete.BioValidator is a validator for the "bio" field. It is called by the builders before save.
+	athlete.BioValidator = athleteDescBio.Validators[0].(func(string) error)
 	// athleteDescFirstName is the schema descriptor for first_name field.
-	athleteDescFirstName := athleteFields[2].Descriptor()
+	athleteDescFirstName := athleteFields[1].Descriptor()
 	// athlete.FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
 	athlete.FirstNameValidator = athleteDescFirstName.Validators[0].(func(string) error)
 	// athleteDescLastName is the schema descriptor for last_name field.
-	athleteDescLastName := athleteFields[4].Descriptor()
+	athleteDescLastName := athleteFields[3].Descriptor()
 	// athlete.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
 	athlete.LastNameValidator = athleteDescLastName.Validators[0].(func(string) error)
 	// athleteDescCreatedAt is the schema descriptor for created_at field.
-	athleteDescCreatedAt := athleteFields[5].Descriptor()
+	athleteDescCreatedAt := athleteFields[4].Descriptor()
 	// athlete.DefaultCreatedAt holds the default value on creation for the created_at field.
 	athlete.DefaultCreatedAt = athleteDescCreatedAt.Default.(func() time.Time)
 	// athleteDescUpdatedAt is the schema descriptor for updated_at field.
-	athleteDescUpdatedAt := athleteFields[6].Descriptor()
+	athleteDescUpdatedAt := athleteFields[5].Descriptor()
 	// athlete.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	athlete.DefaultUpdatedAt = athleteDescUpdatedAt.Default.(func() time.Time)
 	// athlete.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

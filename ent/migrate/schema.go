@@ -11,7 +11,6 @@ var (
 	// AthletesColumns holds the columns for the "athletes" table.
 	AthletesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "email", Type: field.TypeString},
 		{Name: "bio", Type: field.TypeString, Size: 2147483647},
 		{Name: "first_name", Type: field.TypeString},
 		{Name: "middle_name", Type: field.TypeString, Nullable: true},

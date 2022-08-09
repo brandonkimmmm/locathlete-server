@@ -32,7 +32,6 @@ type AthleteMutation struct {
 	op            Op
 	typ           string
 	id            *int
-	email         *string
 	bio           *string
 	first_name    *string
 	middle_name   *string
@@ -141,42 +140,6 @@ func (m *AthleteMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetEmail sets the "email" field.
-func (m *AthleteMutation) SetEmail(s string) {
-	m.email = &s
-}
-
-// Email returns the value of the "email" field in the mutation.
-func (m *AthleteMutation) Email() (r string, exists bool) {
-	v := m.email
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldEmail returns the old "email" field's value of the Athlete entity.
-// If the Athlete object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AthleteMutation) OldEmail(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldEmail requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
-	}
-	return oldValue.Email, nil
-}
-
-// ResetEmail resets all changes to the "email" field.
-func (m *AthleteMutation) ResetEmail() {
-	m.email = nil
 }
 
 // SetBio sets the "bio" field.
@@ -427,10 +390,7 @@ func (m *AthleteMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AthleteMutation) Fields() []string {
-	fields := make([]string, 0, 7)
-	if m.email != nil {
-		fields = append(fields, athlete.FieldEmail)
-	}
+	fields := make([]string, 0, 6)
 	if m.bio != nil {
 		fields = append(fields, athlete.FieldBio)
 	}
@@ -457,8 +417,6 @@ func (m *AthleteMutation) Fields() []string {
 // schema.
 func (m *AthleteMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case athlete.FieldEmail:
-		return m.Email()
 	case athlete.FieldBio:
 		return m.Bio()
 	case athlete.FieldFirstName:
@@ -480,8 +438,6 @@ func (m *AthleteMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *AthleteMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case athlete.FieldEmail:
-		return m.OldEmail(ctx)
 	case athlete.FieldBio:
 		return m.OldBio(ctx)
 	case athlete.FieldFirstName:
@@ -503,13 +459,6 @@ func (m *AthleteMutation) OldField(ctx context.Context, name string) (ent.Value,
 // type.
 func (m *AthleteMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case athlete.FieldEmail:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetEmail(v)
-		return nil
 	case athlete.FieldBio:
 		v, ok := value.(string)
 		if !ok {
@@ -610,9 +559,6 @@ func (m *AthleteMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *AthleteMutation) ResetField(name string) error {
 	switch name {
-	case athlete.FieldEmail:
-		m.ResetEmail()
-		return nil
 	case athlete.FieldBio:
 		m.ResetBio()
 		return nil

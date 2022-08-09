@@ -11,8 +11,6 @@ const (
 	Label = "athlete"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldEmail holds the string denoting the email field in the database.
-	FieldEmail = "email"
 	// FieldBio holds the string denoting the bio field in the database.
 	FieldBio = "bio"
 	// FieldFirstName holds the string denoting the first_name field in the database.
@@ -32,7 +30,6 @@ const (
 // Columns holds all SQL columns for athlete fields.
 var Columns = []string{
 	FieldID,
-	FieldEmail,
 	FieldBio,
 	FieldFirstName,
 	FieldMiddleName,
@@ -52,8 +49,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
-	EmailValidator func(string) error
+	// BioValidator is a validator for the "bio" field. It is called by the builders before save.
+	BioValidator func(string) error
 	// FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
 	FirstNameValidator func(string) error
 	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
