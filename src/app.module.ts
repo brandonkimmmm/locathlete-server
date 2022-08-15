@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import configuration from './config';
 import { nanoid } from 'nanoid';
 import { LoggerModule } from 'nestjs-pino';
+import { AthleteModule } from './athlete/athlete.module';
 
 @Module({
 	imports: [
@@ -70,7 +71,8 @@ import { LoggerModule } from 'nestjs-pino';
 					  }
 					: {}
 		}),
-		PrismaModule
+		PrismaModule,
+		AthleteModule
 	],
 	controllers: [AppController],
 	providers: [AppService]
