@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Athlete {
+    id          Int                 @id @default(autoincrement())
+    bio         String              @db.Text
+    first_name  String              @db.VarChar(255)
+    middle_name String?             @db.VarChar(255)
+    last_name   String              @db.VarChar(255)
+    created_at  DateTime            @default(now())
+    updated_at  DateTime            @default(now()) @updatedAt
+    schools     AthletesOnSchools[]
+
+    @@map("athletes")
+}
+
+model School {
+    id                  Int      @id @default(autoincrement())
+    description         String   @db.Text
+    name                String   @db.VarChar(255)
+    street_address      String   @db.VarChar(255)
+    city                String   @db.VarChar(255)
+    country             String   @db.VarChar(255)
+    administration_area String?  @db.VarChar(255)
+    postal_code         String   @db.VarChar(255)
+    lat                 Float
+    lng                 Float
+    created_at          DateTime @default(now())
+    updated_at          DateTime @default(now()) @updatedAt
+
+    school_type_id Int
+    school_type    SchoolType          @relation(fields: [school_type_id], references: [id])
+    athletes       AthletesOnSchools[]
+
+    @@map("schools")
+}
+
+model SchoolType {
+    id         Int      @id @default(autoincrement())
+    title      String   @unique @db.VarChar(255)
+    created_at DateTime @default(now())
+    updated_at DateTime @default(now()) @updatedAt
+    School     School[]
+
+    @@map("school_types")
+}
+
+model AthletesOnSchools {
+    athlete_id Int
+    athlete    Athlete  @relation(fields: [athlete_id], references: [id], onDelete: Cascade)
+    school_id  Int
+    school     School   @relation(fields: [school_id], references: [id], onDelete: Cascade)
+    start_date DateTime @db.Date()
+    end_date   DateTime @db.Date()
+
+    @@id([athlete_id, school_id])
+    @@map("athletes_on_schools")
+}

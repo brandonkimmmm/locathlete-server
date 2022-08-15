@@ -1,19 +1,22 @@
 version: '3.8'
 
 services:
-  # api:
-  #   container_name: locathlete_api
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - ${PORT}:${PORT}
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - .:/app
-  #   depends_on:
-  #     - db
+  api:
+    container_name: locathlete_api
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    command: npm run start:dev
+    ports:
+      - ${PORT}:${PORT}
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - db
   db:
     container_name: locathlete_db
     image: postgres:14.1
