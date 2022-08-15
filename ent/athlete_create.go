@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"locathlete-server/ent/athlete"
+	"locathlete-server/ent/school"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -78,6 +79,21 @@ func (ac *AthleteCreate) SetNillableUpdatedAt(t *time.Time) *AthleteCreate {
 		ac.SetUpdatedAt(*t)
 	}
 	return ac
+}
+
+// AddSchoolIDs adds the "schools" edge to the School entity by IDs.
+func (ac *AthleteCreate) AddSchoolIDs(ids ...int) *AthleteCreate {
+	ac.mutation.AddSchoolIDs(ids...)
+	return ac
+}
+
+// AddSchools adds the "schools" edges to the School entity.
+func (ac *AthleteCreate) AddSchools(s ...*School) *AthleteCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ac.AddSchoolIDs(ids...)
 }
 
 // Mutation returns the AthleteMutation object of the builder.
@@ -273,6 +289,29 @@ func (ac *AthleteCreate) createSpec() (*Athlete, *sqlgraph.CreateSpec) {
 			Column: athlete.FieldUpdatedAt,
 		})
 		_node.UpdatedAt = value
+	}
+	if nodes := ac.mutation.SchoolsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   athlete.SchoolsTable,
+			Columns: athlete.SchoolsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: school.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AthleteSchoolCreate{config: ac.config, mutation: newAthleteSchoolMutation(ac.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

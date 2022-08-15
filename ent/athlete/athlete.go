@@ -23,8 +23,24 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeSchools holds the string denoting the schools edge name in mutations.
+	EdgeSchools = "schools"
+	// EdgeAthleteSchools holds the string denoting the athlete_schools edge name in mutations.
+	EdgeAthleteSchools = "athlete_schools"
 	// Table holds the table name of the athlete in the database.
 	Table = "athletes"
+	// SchoolsTable is the table that holds the schools relation/edge. The primary key declared below.
+	SchoolsTable = "athlete_schools"
+	// SchoolsInverseTable is the table name for the School entity.
+	// It exists in this package in order to avoid circular dependency with the "school" package.
+	SchoolsInverseTable = "schools"
+	// AthleteSchoolsTable is the table that holds the athlete_schools relation/edge.
+	AthleteSchoolsTable = "athlete_schools"
+	// AthleteSchoolsInverseTable is the table name for the AthleteSchool entity.
+	// It exists in this package in order to avoid circular dependency with the "athleteschool" package.
+	AthleteSchoolsInverseTable = "athlete_schools"
+	// AthleteSchoolsColumn is the table column denoting the athlete_schools relation/edge.
+	AthleteSchoolsColumn = "athlete_id"
 )
 
 // Columns holds all SQL columns for athlete fields.
@@ -37,6 +53,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// SchoolsPrimaryKey and SchoolsColumn2 are the table columns denoting the
+	// primary key for the schools relation (M2M).
+	SchoolsPrimaryKey = []string{"athlete_id", "school_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"locathlete-server/ent/athlete"
 	"locathlete-server/ent/predicate"
+	"locathlete-server/ent/school"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -86,9 +87,45 @@ func (au *AthleteUpdate) SetUpdatedAt(t time.Time) *AthleteUpdate {
 	return au
 }
 
+// AddSchoolIDs adds the "schools" edge to the School entity by IDs.
+func (au *AthleteUpdate) AddSchoolIDs(ids ...int) *AthleteUpdate {
+	au.mutation.AddSchoolIDs(ids...)
+	return au
+}
+
+// AddSchools adds the "schools" edges to the School entity.
+func (au *AthleteUpdate) AddSchools(s ...*School) *AthleteUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return au.AddSchoolIDs(ids...)
+}
+
 // Mutation returns the AthleteMutation object of the builder.
 func (au *AthleteUpdate) Mutation() *AthleteMutation {
 	return au.mutation
+}
+
+// ClearSchools clears all "schools" edges to the School entity.
+func (au *AthleteUpdate) ClearSchools() *AthleteUpdate {
+	au.mutation.ClearSchools()
+	return au
+}
+
+// RemoveSchoolIDs removes the "schools" edge to School entities by IDs.
+func (au *AthleteUpdate) RemoveSchoolIDs(ids ...int) *AthleteUpdate {
+	au.mutation.RemoveSchoolIDs(ids...)
+	return au
+}
+
+// RemoveSchools removes "schools" edges to School entities.
+func (au *AthleteUpdate) RemoveSchools(s ...*School) *AthleteUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return au.RemoveSchoolIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -246,6 +283,72 @@ func (au *AthleteUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: athlete.FieldUpdatedAt,
 		})
 	}
+	if au.mutation.SchoolsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   athlete.SchoolsTable,
+			Columns: athlete.SchoolsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: school.FieldID,
+				},
+			},
+		}
+		createE := &AthleteSchoolCreate{config: au.config, mutation: newAthleteSchoolMutation(au.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.RemovedSchoolsIDs(); len(nodes) > 0 && !au.mutation.SchoolsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   athlete.SchoolsTable,
+			Columns: athlete.SchoolsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: school.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AthleteSchoolCreate{config: au.config, mutation: newAthleteSchoolMutation(au.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.SchoolsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   athlete.SchoolsTable,
+			Columns: athlete.SchoolsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: school.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AthleteSchoolCreate{config: au.config, mutation: newAthleteSchoolMutation(au.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{athlete.Label}
@@ -323,9 +426,45 @@ func (auo *AthleteUpdateOne) SetUpdatedAt(t time.Time) *AthleteUpdateOne {
 	return auo
 }
 
+// AddSchoolIDs adds the "schools" edge to the School entity by IDs.
+func (auo *AthleteUpdateOne) AddSchoolIDs(ids ...int) *AthleteUpdateOne {
+	auo.mutation.AddSchoolIDs(ids...)
+	return auo
+}
+
+// AddSchools adds the "schools" edges to the School entity.
+func (auo *AthleteUpdateOne) AddSchools(s ...*School) *AthleteUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return auo.AddSchoolIDs(ids...)
+}
+
 // Mutation returns the AthleteMutation object of the builder.
 func (auo *AthleteUpdateOne) Mutation() *AthleteMutation {
 	return auo.mutation
+}
+
+// ClearSchools clears all "schools" edges to the School entity.
+func (auo *AthleteUpdateOne) ClearSchools() *AthleteUpdateOne {
+	auo.mutation.ClearSchools()
+	return auo
+}
+
+// RemoveSchoolIDs removes the "schools" edge to School entities by IDs.
+func (auo *AthleteUpdateOne) RemoveSchoolIDs(ids ...int) *AthleteUpdateOne {
+	auo.mutation.RemoveSchoolIDs(ids...)
+	return auo
+}
+
+// RemoveSchools removes "schools" edges to School entities.
+func (auo *AthleteUpdateOne) RemoveSchools(s ...*School) *AthleteUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return auo.RemoveSchoolIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -512,6 +651,72 @@ func (auo *AthleteUpdateOne) sqlSave(ctx context.Context) (_node *Athlete, err e
 			Value:  value,
 			Column: athlete.FieldUpdatedAt,
 		})
+	}
+	if auo.mutation.SchoolsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   athlete.SchoolsTable,
+			Columns: athlete.SchoolsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: school.FieldID,
+				},
+			},
+		}
+		createE := &AthleteSchoolCreate{config: auo.config, mutation: newAthleteSchoolMutation(auo.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.RemovedSchoolsIDs(); len(nodes) > 0 && !auo.mutation.SchoolsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   athlete.SchoolsTable,
+			Columns: athlete.SchoolsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: school.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AthleteSchoolCreate{config: auo.config, mutation: newAthleteSchoolMutation(auo.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.SchoolsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   athlete.SchoolsTable,
+			Columns: athlete.SchoolsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: school.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &AthleteSchoolCreate{config: auo.config, mutation: newAthleteSchoolMutation(auo.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Athlete{config: auo.config}
 	_spec.Assign = _node.assignValues

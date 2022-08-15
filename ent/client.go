@@ -10,9 +10,12 @@ import (
 	"locathlete-server/ent/migrate"
 
 	"locathlete-server/ent/athlete"
+	"locathlete-server/ent/athleteschool"
+	"locathlete-server/ent/school"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -22,6 +25,10 @@ type Client struct {
 	Schema *migrate.Schema
 	// Athlete is the client for interacting with the Athlete builders.
 	Athlete *AthleteClient
+	// AthleteSchool is the client for interacting with the AthleteSchool builders.
+	AthleteSchool *AthleteSchoolClient
+	// School is the client for interacting with the School builders.
+	School *SchoolClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -36,6 +43,8 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Athlete = NewAthleteClient(c.config)
+	c.AthleteSchool = NewAthleteSchoolClient(c.config)
+	c.School = NewSchoolClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -67,9 +76,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Athlete: NewAthleteClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Athlete:       NewAthleteClient(cfg),
+		AthleteSchool: NewAthleteSchoolClient(cfg),
+		School:        NewSchoolClient(cfg),
 	}, nil
 }
 
@@ -87,9 +98,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Athlete: NewAthleteClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Athlete:       NewAthleteClient(cfg),
+		AthleteSchool: NewAthleteSchoolClient(cfg),
+		School:        NewSchoolClient(cfg),
 	}, nil
 }
 
@@ -119,6 +132,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Athlete.Use(hooks...)
+	c.AthleteSchool.Use(hooks...)
+	c.School.Use(hooks...)
 }
 
 // AthleteClient is a client for the Athlete schema.
@@ -206,7 +221,234 @@ func (c *AthleteClient) GetX(ctx context.Context, id int) *Athlete {
 	return obj
 }
 
+// QuerySchools queries the schools edge of a Athlete.
+func (c *AthleteClient) QuerySchools(a *Athlete) *SchoolQuery {
+	query := &SchoolQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(athlete.Table, athlete.FieldID, id),
+			sqlgraph.To(school.Table, school.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, athlete.SchoolsTable, athlete.SchoolsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAthleteSchools queries the athlete_schools edge of a Athlete.
+func (c *AthleteClient) QueryAthleteSchools(a *Athlete) *AthleteSchoolQuery {
+	query := &AthleteSchoolQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(athlete.Table, athlete.FieldID, id),
+			sqlgraph.To(athleteschool.Table, athleteschool.AthleteColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, athlete.AthleteSchoolsTable, athlete.AthleteSchoolsColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *AthleteClient) Hooks() []Hook {
 	return c.hooks.Athlete
+}
+
+// AthleteSchoolClient is a client for the AthleteSchool schema.
+type AthleteSchoolClient struct {
+	config
+}
+
+// NewAthleteSchoolClient returns a client for the AthleteSchool from the given config.
+func NewAthleteSchoolClient(c config) *AthleteSchoolClient {
+	return &AthleteSchoolClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `athleteschool.Hooks(f(g(h())))`.
+func (c *AthleteSchoolClient) Use(hooks ...Hook) {
+	c.hooks.AthleteSchool = append(c.hooks.AthleteSchool, hooks...)
+}
+
+// Create returns a builder for creating a AthleteSchool entity.
+func (c *AthleteSchoolClient) Create() *AthleteSchoolCreate {
+	mutation := newAthleteSchoolMutation(c.config, OpCreate)
+	return &AthleteSchoolCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AthleteSchool entities.
+func (c *AthleteSchoolClient) CreateBulk(builders ...*AthleteSchoolCreate) *AthleteSchoolCreateBulk {
+	return &AthleteSchoolCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AthleteSchool.
+func (c *AthleteSchoolClient) Update() *AthleteSchoolUpdate {
+	mutation := newAthleteSchoolMutation(c.config, OpUpdate)
+	return &AthleteSchoolUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AthleteSchoolClient) UpdateOne(as *AthleteSchool) *AthleteSchoolUpdateOne {
+	mutation := newAthleteSchoolMutation(c.config, OpUpdateOne)
+	mutation.athlete = &as.AthleteID
+	mutation.school = &as.SchoolID
+	return &AthleteSchoolUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AthleteSchool.
+func (c *AthleteSchoolClient) Delete() *AthleteSchoolDelete {
+	mutation := newAthleteSchoolMutation(c.config, OpDelete)
+	return &AthleteSchoolDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for AthleteSchool.
+func (c *AthleteSchoolClient) Query() *AthleteSchoolQuery {
+	return &AthleteSchoolQuery{
+		config: c.config,
+	}
+}
+
+// QueryAthlete queries the athlete edge of a AthleteSchool.
+func (c *AthleteSchoolClient) QueryAthlete(as *AthleteSchool) *AthleteQuery {
+	return c.Query().
+		Where(athleteschool.AthleteID(as.AthleteID), athleteschool.SchoolID(as.SchoolID)).
+		QueryAthlete()
+}
+
+// QuerySchool queries the school edge of a AthleteSchool.
+func (c *AthleteSchoolClient) QuerySchool(as *AthleteSchool) *SchoolQuery {
+	return c.Query().
+		Where(athleteschool.AthleteID(as.AthleteID), athleteschool.SchoolID(as.SchoolID)).
+		QuerySchool()
+}
+
+// Hooks returns the client hooks.
+func (c *AthleteSchoolClient) Hooks() []Hook {
+	return c.hooks.AthleteSchool
+}
+
+// SchoolClient is a client for the School schema.
+type SchoolClient struct {
+	config
+}
+
+// NewSchoolClient returns a client for the School from the given config.
+func NewSchoolClient(c config) *SchoolClient {
+	return &SchoolClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `school.Hooks(f(g(h())))`.
+func (c *SchoolClient) Use(hooks ...Hook) {
+	c.hooks.School = append(c.hooks.School, hooks...)
+}
+
+// Create returns a builder for creating a School entity.
+func (c *SchoolClient) Create() *SchoolCreate {
+	mutation := newSchoolMutation(c.config, OpCreate)
+	return &SchoolCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of School entities.
+func (c *SchoolClient) CreateBulk(builders ...*SchoolCreate) *SchoolCreateBulk {
+	return &SchoolCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for School.
+func (c *SchoolClient) Update() *SchoolUpdate {
+	mutation := newSchoolMutation(c.config, OpUpdate)
+	return &SchoolUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SchoolClient) UpdateOne(s *School) *SchoolUpdateOne {
+	mutation := newSchoolMutation(c.config, OpUpdateOne, withSchool(s))
+	return &SchoolUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SchoolClient) UpdateOneID(id int) *SchoolUpdateOne {
+	mutation := newSchoolMutation(c.config, OpUpdateOne, withSchoolID(id))
+	return &SchoolUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for School.
+func (c *SchoolClient) Delete() *SchoolDelete {
+	mutation := newSchoolMutation(c.config, OpDelete)
+	return &SchoolDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SchoolClient) DeleteOne(s *School) *SchoolDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOne returns a builder for deleting the given entity by its id.
+func (c *SchoolClient) DeleteOneID(id int) *SchoolDeleteOne {
+	builder := c.Delete().Where(school.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SchoolDeleteOne{builder}
+}
+
+// Query returns a query builder for School.
+func (c *SchoolClient) Query() *SchoolQuery {
+	return &SchoolQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a School entity by its id.
+func (c *SchoolClient) Get(ctx context.Context, id int) (*School, error) {
+	return c.Query().Where(school.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SchoolClient) GetX(ctx context.Context, id int) *School {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAthletes queries the athletes edge of a School.
+func (c *SchoolClient) QueryAthletes(s *School) *AthleteQuery {
+	query := &AthleteQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(school.Table, school.FieldID, id),
+			sqlgraph.To(athlete.Table, athlete.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, school.AthletesTable, school.AthletesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySchoolAthletes queries the school_athletes edge of a School.
+func (c *SchoolClient) QuerySchoolAthletes(s *School) *AthleteSchoolQuery {
+	query := &AthleteSchoolQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(school.Table, school.FieldID, id),
+			sqlgraph.To(athleteschool.Table, athleteschool.SchoolColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, school.SchoolAthletesTable, school.SchoolAthletesColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SchoolClient) Hooks() []Hook {
+	return c.hooks.School
 }

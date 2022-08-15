@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -26,5 +27,8 @@ func (Athlete) Fields() []ent.Field {
 
 // Edges of the Athlete.
 func (Athlete) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("schools", School.Type).
+			Through("athlete_schools", AthleteSchool.Type),
+	}
 }

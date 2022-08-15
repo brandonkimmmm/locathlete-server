@@ -4,9 +4,12 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"locathlete-server/ent/athlete"
+	"locathlete-server/ent/athleteschool"
 	"locathlete-server/ent/predicate"
+	"locathlete-server/ent/school"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
@@ -23,6 +26,9 @@ type AthleteQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Athlete
+	// eager-loading edges.
+	withSchools        *SchoolQuery
+	withAthleteSchools *AthleteSchoolQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -57,6 +63,50 @@ func (aq *AthleteQuery) Unique(unique bool) *AthleteQuery {
 func (aq *AthleteQuery) Order(o ...OrderFunc) *AthleteQuery {
 	aq.order = append(aq.order, o...)
 	return aq
+}
+
+// QuerySchools chains the current query on the "schools" edge.
+func (aq *AthleteQuery) QuerySchools() *SchoolQuery {
+	query := &SchoolQuery{config: aq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(athlete.Table, athlete.FieldID, selector),
+			sqlgraph.To(school.Table, school.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, athlete.SchoolsTable, athlete.SchoolsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAthleteSchools chains the current query on the "athlete_schools" edge.
+func (aq *AthleteQuery) QueryAthleteSchools() *AthleteSchoolQuery {
+	query := &AthleteSchoolQuery{config: aq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(athlete.Table, athlete.FieldID, selector),
+			sqlgraph.To(athleteschool.Table, athleteschool.AthleteColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, athlete.AthleteSchoolsTable, athlete.AthleteSchoolsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Athlete entity from the query.
@@ -235,16 +285,40 @@ func (aq *AthleteQuery) Clone() *AthleteQuery {
 		return nil
 	}
 	return &AthleteQuery{
-		config:     aq.config,
-		limit:      aq.limit,
-		offset:     aq.offset,
-		order:      append([]OrderFunc{}, aq.order...),
-		predicates: append([]predicate.Athlete{}, aq.predicates...),
+		config:             aq.config,
+		limit:              aq.limit,
+		offset:             aq.offset,
+		order:              append([]OrderFunc{}, aq.order...),
+		predicates:         append([]predicate.Athlete{}, aq.predicates...),
+		withSchools:        aq.withSchools.Clone(),
+		withAthleteSchools: aq.withAthleteSchools.Clone(),
 		// clone intermediate query.
 		sql:    aq.sql.Clone(),
 		path:   aq.path,
 		unique: aq.unique,
 	}
+}
+
+// WithSchools tells the query-builder to eager-load the nodes that are connected to
+// the "schools" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *AthleteQuery) WithSchools(opts ...func(*SchoolQuery)) *AthleteQuery {
+	query := &SchoolQuery{config: aq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withSchools = query
+	return aq
+}
+
+// WithAthleteSchools tells the query-builder to eager-load the nodes that are connected to
+// the "athlete_schools" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *AthleteQuery) WithAthleteSchools(opts ...func(*AthleteSchoolQuery)) *AthleteQuery {
+	query := &AthleteSchoolQuery{config: aq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withAthleteSchools = query
+	return aq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -313,8 +387,12 @@ func (aq *AthleteQuery) prepareQuery(ctx context.Context) error {
 
 func (aq *AthleteQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Athlete, error) {
 	var (
-		nodes = []*Athlete{}
-		_spec = aq.querySpec()
+		nodes       = []*Athlete{}
+		_spec       = aq.querySpec()
+		loadedTypes = [2]bool{
+			aq.withSchools != nil,
+			aq.withAthleteSchools != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		return (*Athlete).scanValues(nil, columns)
@@ -322,6 +400,7 @@ func (aq *AthleteQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Athl
 	_spec.Assign = func(columns []string, values []interface{}) error {
 		node := &Athlete{config: aq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -333,6 +412,85 @@ func (aq *AthleteQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Athl
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := aq.withSchools; query != nil {
+		edgeids := make([]driver.Value, len(nodes))
+		byid := make(map[int]*Athlete)
+		nids := make(map[int]map[*Athlete]struct{})
+		for i, node := range nodes {
+			edgeids[i] = node.ID
+			byid[node.ID] = node
+			node.Edges.Schools = []*School{}
+		}
+		query.Where(func(s *sql.Selector) {
+			joinT := sql.Table(athlete.SchoolsTable)
+			s.Join(joinT).On(s.C(school.FieldID), joinT.C(athlete.SchoolsPrimaryKey[1]))
+			s.Where(sql.InValues(joinT.C(athlete.SchoolsPrimaryKey[0]), edgeids...))
+			columns := s.SelectedColumns()
+			s.Select(joinT.C(athlete.SchoolsPrimaryKey[0]))
+			s.AppendSelect(columns...)
+			s.SetDistinct(false)
+		})
+		neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]interface{}, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]interface{}{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []interface{}) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Athlete]struct{}{byid[outValue]: struct{}{}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byid[outValue]] = struct{}{}
+				return nil
+			}
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "schools" node returned %v`, n.ID)
+			}
+			for kn := range nodes {
+				kn.Edges.Schools = append(kn.Edges.Schools, n)
+			}
+		}
+	}
+
+	if query := aq.withAthleteSchools; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Athlete)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.AthleteSchools = []*AthleteSchool{}
+		}
+		query.Where(predicate.AthleteSchool(func(s *sql.Selector) {
+			s.Where(sql.InValues(athlete.AthleteSchoolsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.AthleteID
+			node, ok := nodeids[fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "athlete_id" returned %v for node %v`, fk, n)
+			}
+			node.Edges.AthleteSchools = append(node.Edges.AthleteSchools, n)
+		}
+	}
+
 	return nodes, nil
 }
 

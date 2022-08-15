@@ -21,6 +21,32 @@ func (f AthleteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return f(ctx, mv)
 }
 
+// The AthleteSchoolFunc type is an adapter to allow the use of ordinary
+// function as AthleteSchool mutator.
+type AthleteSchoolFunc func(context.Context, *ent.AthleteSchoolMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AthleteSchoolFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.AthleteSchoolMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AthleteSchoolMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The SchoolFunc type is an adapter to allow the use of ordinary
+// function as School mutator.
+type SchoolFunc func(context.Context, *ent.SchoolMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SchoolFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.SchoolMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SchoolMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

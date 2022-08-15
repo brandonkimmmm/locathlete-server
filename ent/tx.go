@@ -14,6 +14,10 @@ type Tx struct {
 	config
 	// Athlete is the client for interacting with the Athlete builders.
 	Athlete *AthleteClient
+	// AthleteSchool is the client for interacting with the AthleteSchool builders.
+	AthleteSchool *AthleteSchoolClient
+	// School is the client for interacting with the School builders.
+	School *SchoolClient
 
 	// lazily loaded.
 	client     *Client
@@ -150,6 +154,8 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Athlete = NewAthleteClient(tx.config)
+	tx.AthleteSchool = NewAthleteSchoolClient(tx.config)
+	tx.School = NewSchoolClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -729,6 +730,62 @@ func UpdatedAtLT(v time.Time) predicate.Athlete {
 func UpdatedAtLTE(v time.Time) predicate.Athlete {
 	return predicate.Athlete(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// HasSchools applies the HasEdge predicate on the "schools" edge.
+func HasSchools() predicate.Athlete {
+	return predicate.Athlete(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(SchoolsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, SchoolsTable, SchoolsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSchoolsWith applies the HasEdge predicate on the "schools" edge with a given conditions (other predicates).
+func HasSchoolsWith(preds ...predicate.School) predicate.Athlete {
+	return predicate.Athlete(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(SchoolsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, SchoolsTable, SchoolsPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAthleteSchools applies the HasEdge predicate on the "athlete_schools" edge.
+func HasAthleteSchools() predicate.Athlete {
+	return predicate.Athlete(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(AthleteSchoolsTable, AthleteSchoolsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, AthleteSchoolsTable, AthleteSchoolsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAthleteSchoolsWith applies the HasEdge predicate on the "athlete_schools" edge with a given conditions (other predicates).
+func HasAthleteSchoolsWith(preds ...predicate.AthleteSchool) predicate.Athlete {
+	return predicate.Athlete(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(AthleteSchoolsInverseTable, AthleteSchoolsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, AthleteSchoolsTable, AthleteSchoolsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

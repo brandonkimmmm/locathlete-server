@@ -4,7 +4,9 @@ package ent
 
 import (
 	"locathlete-server/ent/athlete"
+	"locathlete-server/ent/athleteschool"
 	"locathlete-server/ent/schema"
+	"locathlete-server/ent/school"
 	"time"
 )
 
@@ -36,4 +38,58 @@ func init() {
 	athlete.DefaultUpdatedAt = athleteDescUpdatedAt.Default.(func() time.Time)
 	// athlete.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	athlete.UpdateDefaultUpdatedAt = athleteDescUpdatedAt.UpdateDefault.(func() time.Time)
+	athleteschoolFields := schema.AthleteSchool{}.Fields()
+	_ = athleteschoolFields
+	// athleteschoolDescCreatedAt is the schema descriptor for created_at field.
+	athleteschoolDescCreatedAt := athleteschoolFields[4].Descriptor()
+	// athleteschool.DefaultCreatedAt holds the default value on creation for the created_at field.
+	athleteschool.DefaultCreatedAt = athleteschoolDescCreatedAt.Default.(func() time.Time)
+	schoolFields := schema.School{}.Fields()
+	_ = schoolFields
+	// schoolDescName is the schema descriptor for name field.
+	schoolDescName := schoolFields[0].Descriptor()
+	// school.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	school.NameValidator = schoolDescName.Validators[0].(func(string) error)
+	// schoolDescDescription is the schema descriptor for description field.
+	schoolDescDescription := schoolFields[1].Descriptor()
+	// school.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	school.DescriptionValidator = schoolDescDescription.Validators[0].(func(string) error)
+	// schoolDescStreetAddress is the schema descriptor for street_address field.
+	schoolDescStreetAddress := schoolFields[2].Descriptor()
+	// school.StreetAddressValidator is a validator for the "street_address" field. It is called by the builders before save.
+	school.StreetAddressValidator = schoolDescStreetAddress.Validators[0].(func(string) error)
+	// schoolDescCity is the schema descriptor for city field.
+	schoolDescCity := schoolFields[3].Descriptor()
+	// school.CityValidator is a validator for the "city" field. It is called by the builders before save.
+	school.CityValidator = schoolDescCity.Validators[0].(func(string) error)
+	// schoolDescCountry is the schema descriptor for country field.
+	schoolDescCountry := schoolFields[4].Descriptor()
+	// school.CountryValidator is a validator for the "country" field. It is called by the builders before save.
+	school.CountryValidator = schoolDescCountry.Validators[0].(func(string) error)
+	// schoolDescAdministrationArea is the schema descriptor for administration_area field.
+	schoolDescAdministrationArea := schoolFields[5].Descriptor()
+	// school.AdministrationAreaValidator is a validator for the "administration_area" field. It is called by the builders before save.
+	school.AdministrationAreaValidator = schoolDescAdministrationArea.Validators[0].(func(string) error)
+	// schoolDescPostalCode is the schema descriptor for postal_code field.
+	schoolDescPostalCode := schoolFields[6].Descriptor()
+	// school.PostalCodeValidator is a validator for the "postal_code" field. It is called by the builders before save.
+	school.PostalCodeValidator = schoolDescPostalCode.Validators[0].(func(string) error)
+	// schoolDescLat is the schema descriptor for lat field.
+	schoolDescLat := schoolFields[7].Descriptor()
+	// school.LatValidator is a validator for the "lat" field. It is called by the builders before save.
+	school.LatValidator = schoolDescLat.Validators[0].(func(float64) error)
+	// schoolDescLng is the schema descriptor for lng field.
+	schoolDescLng := schoolFields[8].Descriptor()
+	// school.LngValidator is a validator for the "lng" field. It is called by the builders before save.
+	school.LngValidator = schoolDescLng.Validators[0].(func(float64) error)
+	// schoolDescCreatedAt is the schema descriptor for created_at field.
+	schoolDescCreatedAt := schoolFields[9].Descriptor()
+	// school.DefaultCreatedAt holds the default value on creation for the created_at field.
+	school.DefaultCreatedAt = schoolDescCreatedAt.Default.(func() time.Time)
+	// schoolDescUpdatedAt is the schema descriptor for updated_at field.
+	schoolDescUpdatedAt := schoolFields[10].Descriptor()
+	// school.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	school.DefaultUpdatedAt = schoolDescUpdatedAt.Default.(func() time.Time)
+	// school.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	school.UpdateDefaultUpdatedAt = schoolDescUpdatedAt.UpdateDefault.(func() time.Time)
 }

@@ -24,11 +24,64 @@ var (
 		Columns:    AthletesColumns,
 		PrimaryKey: []*schema.Column{AthletesColumns[0]},
 	}
+	// AthleteSchoolsColumns holds the columns for the "athlete_schools" table.
+	AthleteSchoolsColumns = []*schema.Column{
+		{Name: "start_date", Type: field.TypeTime},
+		{Name: "end_date", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "athlete_id", Type: field.TypeInt},
+		{Name: "school_id", Type: field.TypeInt},
+	}
+	// AthleteSchoolsTable holds the schema information for the "athlete_schools" table.
+	AthleteSchoolsTable = &schema.Table{
+		Name:       "athlete_schools",
+		Columns:    AthleteSchoolsColumns,
+		PrimaryKey: []*schema.Column{AthleteSchoolsColumns[3], AthleteSchoolsColumns[4]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "athlete_schools_athletes_athlete",
+				Columns:    []*schema.Column{AthleteSchoolsColumns[3]},
+				RefColumns: []*schema.Column{AthletesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "athlete_schools_schools_school",
+				Columns:    []*schema.Column{AthleteSchoolsColumns[4]},
+				RefColumns: []*schema.Column{SchoolsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// SchoolsColumns holds the columns for the "schools" table.
+	SchoolsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Size: 2147483647},
+		{Name: "street_address", Type: field.TypeString},
+		{Name: "city", Type: field.TypeString},
+		{Name: "country", Type: field.TypeString},
+		{Name: "administration_area", Type: field.TypeString},
+		{Name: "postal_code", Type: field.TypeString},
+		{Name: "lat", Type: field.TypeFloat64},
+		{Name: "lng", Type: field.TypeFloat64},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// SchoolsTable holds the schema information for the "schools" table.
+	SchoolsTable = &schema.Table{
+		Name:       "schools",
+		Columns:    SchoolsColumns,
+		PrimaryKey: []*schema.Column{SchoolsColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AthletesTable,
+		AthleteSchoolsTable,
+		SchoolsTable,
 	}
 )
 
 func init() {
+	AthleteSchoolsTable.ForeignKeys[0].RefTable = AthletesTable
+	AthleteSchoolsTable.ForeignKeys[1].RefTable = SchoolsTable
 }

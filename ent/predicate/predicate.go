@@ -8,3 +8,9 @@ import (
 
 // Athlete is the predicate function for athlete builders.
 type Athlete func(*sql.Selector)
+
+// AthleteSchool is the predicate function for athleteschool builders.
+type AthleteSchool func(*sql.Selector)
+
+// School is the predicate function for school builders.
+type School func(*sql.Selector)

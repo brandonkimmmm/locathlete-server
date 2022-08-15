@@ -28,6 +28,38 @@ type Athlete struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the AthleteQuery when eager-loading is set.
+	Edges AthleteEdges `json:"edges"`
+}
+
+// AthleteEdges holds the relations/edges for other nodes in the graph.
+type AthleteEdges struct {
+	// Schools holds the value of the schools edge.
+	Schools []*School `json:"schools,omitempty"`
+	// AthleteSchools holds the value of the athlete_schools edge.
+	AthleteSchools []*AthleteSchool `json:"athlete_schools,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// SchoolsOrErr returns the Schools value or an error if the edge
+// was not loaded in eager-loading.
+func (e AthleteEdges) SchoolsOrErr() ([]*School, error) {
+	if e.loadedTypes[0] {
+		return e.Schools, nil
+	}
+	return nil, &NotLoadedError{edge: "schools"}
+}
+
+// AthleteSchoolsOrErr returns the AthleteSchools value or an error if the edge
+// was not loaded in eager-loading.
+func (e AthleteEdges) AthleteSchoolsOrErr() ([]*AthleteSchool, error) {
+	if e.loadedTypes[1] {
+		return e.AthleteSchools, nil
+	}
+	return nil, &NotLoadedError{edge: "athlete_schools"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -101,6 +133,16 @@ func (a *Athlete) assignValues(columns []string, values []interface{}) error {
 		}
 	}
 	return nil
+}
+
+// QuerySchools queries the "schools" edge of the Athlete entity.
+func (a *Athlete) QuerySchools() *SchoolQuery {
+	return (&AthleteClient{config: a.config}).QuerySchools(a)
+}
+
+// QueryAthleteSchools queries the "athlete_schools" edge of the Athlete entity.
+func (a *Athlete) QueryAthleteSchools() *AthleteSchoolQuery {
+	return (&AthleteClient{config: a.config}).QueryAthleteSchools(a)
 }
 
 // Update returns a builder for updating this Athlete.
